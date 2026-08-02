@@ -2,27 +2,33 @@ name: Build Android APK
 
 on:
   push:
-    branches: [ main, master ]
-  workflow_dispatch:
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v3
 
-    - name: Fix permissions
-      run: |
-        sudo chmod -R 777 .
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
 
-    - name: Build APK with Official Buildozer Docker Container
+    - name: Install Dependencies
       run: |
-        docker run --rm -v ${{ github.workspace }}:/home/user/hostpython kivy/buildozer buildozer -v android debug
+        sudo apt-get update
+        sudo apt-get install -y build-essential git ffmpeg libsdl2-dev libsdl2-image-dev libsdl2-mixin-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev openjdk-17-jdk zip unzip cmake autoconf libtool pkg-config
+        pip install --upgrade pip
+        pip install buildozer cython setuptools kivy
+
+    - name: Build with Buildozer
+      run: |
+        yes | buildozer -v android debug
 
     - name: Upload APK Artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v3
       with:
-        name: MyStudioPro-APK
+        name: app-release
         path: bin/*.apk
